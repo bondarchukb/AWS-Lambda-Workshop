@@ -1,0 +1,24 @@
+# OS files
+.DS_Store
+
+# Credentials - NEVER commit these
+*.csv
+creds.txt
+*.pem
+*.key
+
+# IDE
+.claude/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# CDK
+cdk.out/
+node_modules/
+
+# SAM
+.aws-sam/

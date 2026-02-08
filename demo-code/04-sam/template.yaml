@@ -1,0 +1,46 @@
+# AWS Lambda Workshop - Part 4: SAM Template
+# This is the infrastructure-as-code definition for SAM
+
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AWS Lambda Workshop - SAM Demo
+
+# Global settings for all functions
+Globals:
+  Function:
+    Timeout: 10
+    Runtime: python3.12
+    MemorySize: 256
+
+Resources:
+  # Lambda Function
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: hello_world/
+      Handler: app.lambda_handler
+      Description: Workshop SAM Lambda function
+      Environment:
+        Variables:
+          ENVIRONMENT: workshop
+      Events:
+        # API Gateway trigger
+        HelloWorld:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: get
+        # Also respond to POST
+        HelloWorldPost:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: post
+
+Outputs:
+  HelloWorldApi:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello"
+  HelloWorldFunction:
+    Description: "Lambda Function ARN"
+    Value: !GetAtt HelloWorldFunction.Arn

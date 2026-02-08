@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS Lambda Workshop — 4 Ways to Deploy</title>
+
+  <!-- Reveal.js from CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css" id="theme">
+  <!-- Highlight.js for code -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css">
+
+  <style>
+    :root {
+      --aws-orange: #FF9900;
+      --aws-dark: #232F3E;
+      --aws-navy: #1B2A4A;
+      --aws-light: #F2F3F3;
+      --aws-teal: #1DC7EA;
+      --aws-green: #7AA116;
+      --aws-purple: #8C4FFF;
+    }
+
+    .reveal {
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    .reveal .slides {
+      text-align: left;
+    }
+
+    .reveal .slides section {
+      padding: 20px 40px;
+    }
+
+    .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: -0.02em;
+    }
+
+    .reveal h1 { font-size: 2.4em; color: var(--aws-orange); }
+    .reveal h2 { font-size: 1.7em; color: var(--aws-orange); margin-bottom: 0.4em; }
+    .reveal h3 { font-size: 1.3em; color: var(--aws-teal); margin-bottom: 0.3em; }
+
+    .reveal p, .reveal li {
+      font-size: 0.75em;
+      line-height: 1.6;
+    }
+
+    .reveal ul { margin-left: 0.5em; }
+    .reveal li { margin-bottom: 0.3em; }
+
+    .reveal pre {
+      width: 100%;
+      font-size: 0.48em;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      border-radius: 8px;
+      border-left: 4px solid var(--aws-orange);
+    }
+
+    .reveal pre code {
+      padding: 16px 20px;
+      max-height: 420px;
+      border-radius: 8px;
+    }
+
+    .reveal code {
+      color: var(--aws-orange);
+      font-size: 0.9em;
+    }
+
+    .reveal pre code {
+      color: #f8f8f2;
+    }
+
+    /* Custom slide backgrounds */
+    .reveal .slide-background { background: var(--aws-dark); }
+
+    /* Title slide */
+    .title-slide {
+      text-align: center !important;
+    }
+    .title-slide h1 {
+      font-size: 2.6em;
+      margin-bottom: 0.1em;
+    }
+    .title-slide .subtitle {
+      font-size: 1.1em;
+      color: var(--aws-light);
+      margin-bottom: 0.6em;
+    }
+    .title-slide .meta {
+      font-size: 0.7em;
+      color: #999;
+    }
+
+    /* Section divider slides */
+    .section-slide {
+      text-align: center !important;
+    }
+    .section-slide h2 {
+      font-size: 2.2em;
+      margin-bottom: 0.2em;
+    }
+    .section-slide .part-label {
+      font-size: 1em;
+      color: var(--aws-teal);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.3em;
+    }
+    .section-slide .duration {
+      font-size: 0.75em;
+      color: #888;
+    }
+
+    /* Comparison table */
+    .reveal table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.65em;
+      margin: 0.5em 0;
+    }
+    .reveal table th {
+      background: var(--aws-orange);
+      color: var(--aws-dark);
+      padding: 10px 14px;
+      font-weight: 700;
+      text-align: left;
+    }
+    .reveal table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .reveal table tr:nth-child(even) td {
+      background: rgba(255,255,255,0.03);
+    }
+
+    /* Badges / Tags */
+    .badge {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 0.65em;
+      font-weight: 600;
+      margin: 2px;
+    }
+    .badge-console { background: #3b82f6; color: white; }
+    .badge-cli { background: var(--aws-green); color: white; }
+    .badge-cdk { background: var(--aws-purple); color: white; }
+    .badge-sam { background: var(--aws-orange); color: var(--aws-dark); }
+
+    /* Key takeaway box */
+    .takeaway {
+      background: rgba(255,153,0,0.12);
+      border-left: 4px solid var(--aws-orange);
+      padding: 14px 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 0.6em 0;
+      font-size: 0.72em;
+    }
+    .takeaway strong {
+      color: var(--aws-orange);
+    }
+
+    /* Tip box */
+    .tip {
+      background: rgba(29,199,234,0.1);
+      border-left: 4px solid var(--aws-teal);
+      padding: 12px 18px;
+      border-radius: 0 8px 8px 0;
+      margin: 0.5em 0;
+      font-size: 0.68em;
+    }
+    .tip strong {
+      color: var(--aws-teal);
+    }
+
+    /* Two column layout */
+    .columns {
+      display: flex;
+      gap: 30px;
+      align-items: flex-start;
+    }
+    .columns > * {
+      flex: 1;
+    }
+
+    /* Icon-style numbers */
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: var(--aws-orange);
+      color: var(--aws-dark);
+      border-radius: 50%;
+      font-weight: 700;
+      font-size: 0.8em;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    /* AWS Lambda icon area */
+    .lambda-icon {
+      font-size: 4em;
+      text-align: center;
+      margin: 0.3em 0;
+    }
+
+    /* Footer */
+    .footer-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--aws-orange), var(--aws-teal), var(--aws-purple));
+      z-index: 100;
+    }
+
+    /* Progress bar override */
+    .reveal .progress { color: var(--aws-orange); height: 4px; }
+
+    /* Fragment highlight */
+    .reveal .fragment.highlight-orange.visible {
+      color: var(--aws-orange);
+    }
+
+    /* Architecture diagram boxes */
+    .arch-flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 1em 0;
+      font-size: 0.7em;
+    }
+    .arch-box {
+      background: rgba(255,153,0,0.15);
+      border: 2px solid var(--aws-orange);
+      padding: 12px 20px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 600;
+    }
+    .arch-box.highlight {
+      background: var(--aws-orange);
+      color: var(--aws-dark);
+    }
+    .arch-arrow {
+      font-size: 1.5em;
+      color: var(--aws-teal);
+    }
+
+    /* Limits grid */
+    .limits-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-size: 0.65em;
+    }
+    .limit-item {
+      background: rgba(255,255,255,0.05);
+      padding: 8px 14px;
+      border-radius: 6px;
+      border-left: 3px solid var(--aws-teal);
+    }
+    .limit-item strong {
+      color: var(--aws-teal);
+    }
+  </style>
+</head>
+<body>
+
+<div class="reveal">
+<div class="slides">
+
+<!-- ============================================================ -->
+<!-- TITLE SLIDE -->
+<!-- ============================================================ -->
+<section class="title-slide" data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <div style="margin-bottom: 0.4em;">
+    <span style="font-size:3.5em;">&#955;</span>
+  </div>
+  <h1>AWS Lambda Workshop</h1>
+  <p class="subtitle">4 Ways to Deploy Serverless Functions with Python</p>
+  <div style="display:flex; justify-content:center; gap:12px; margin: 1em 0;">
+    <span class="badge badge-console">Console</span>
+    <span class="badge badge-cli">CLI</span>
+    <span class="badge badge-cdk">CDK</span>
+    <span class="badge badge-sam">SAM</span>
+  </div>
+  <aside class="notes">
+    Welcome everyone! Today we'll go from zero to deploying Lambda functions using four different methods — all in one hour.
+  </aside>
+</section>
+
+<!-- ============================================================ -->
+<!-- AGENDA -->
+<!-- ============================================================ -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Agenda</h2>
+  <table>
+    <thead>
+      <tr><th>Time</th><th>Topic</th><th>Method</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>0:00 – 0:05</td><td>Introduction &amp; Setup Check</td><td>—</td></tr>
+      <tr class="fragment"><td>0:05 – 0:15</td><td>Deploy via AWS Console</td><td><span class="badge badge-console">Console</span></td></tr>
+      <tr class="fragment"><td>0:15 – 0:30</td><td>Deploy via AWS CLI</td><td><span class="badge badge-cli">CLI</span></td></tr>
+      <tr class="fragment"><td>0:30 – 0:45</td><td>Deploy via AWS CDK (Python)</td><td><span class="badge badge-cdk">CDK</span></td></tr>
+      <tr class="fragment"><td>0:45 – 0:55</td><td>Local Testing with SAM</td><td><span class="badge badge-sam">SAM</span></td></tr>
+      <tr class="fragment"><td>0:55 – 1:00</td><td>Wrap-Up &amp; Cleanup</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <aside class="notes">
+    This is a fast-paced, hands-on session. Make sure terminals are ready.
+  </aside>
+</section>
+
+<!-- ============================================================ -->
+<!-- WHAT IS LAMBDA? -->
+<!-- ============================================================ -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>What is AWS Lambda?</h2>
+  <div class="columns">
+    <div>
+      <ul>
+        <li class="fragment"><strong>Serverless compute</strong> — upload code, AWS handles the rest</li>
+        <li class="fragment"><strong>Pay per use</strong> — billed per millisecond of execution</li>
+        <li class="fragment"><strong>Auto-scaling</strong> — 0 to thousands of concurrent executions</li>
+        <li class="fragment"><strong>Event-driven</strong> — triggered by HTTP, S3, SQS, schedules, and more</li>
+        <li class="fragment"><strong>No servers to manage</strong> — no patching, no provisioning</li>
+      </ul>
+    </div>
+    <div>
+      <div class="arch-flow" style="flex-direction:column;">
+        <div class="arch-box">Event Source<br><small>API Gateway / S3 / SQS</small></div>
+        <div class="arch-arrow">&#8595;</div>
+        <div class="arch-box highlight">&#955; Lambda Function<br><small>Your Python Code</small></div>
+        <div class="arch-arrow">&#8595;</div>
+        <div class="arch-box">AWS Services<br><small>DynamoDB / S3 / SNS</small></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    Quick refresher — Lambda is serverless. You upload code, AWS handles everything else.
+  </aside>
+</section>
+
+<!-- ============================================================ -->
+<!-- PREREQUISITES -->
+<!-- ============================================================ -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Prerequisites Check</h2>
+  <pre><code class="language-bash" data-trim>
+aws --version          # AWS CLI v2
+sam --version          # SAM CLI
+python3 --version      # Python 3.11+
+cdk --version          # AWS CDK
+docker --version       # Docker Desktop (must be running)
+
+# Verify AWS credentials
+aws sts get-caller-identity
+
+# Check your region
+aws configure get region
+  </code></pre>
+  <div class="tip">
+    <strong>Tip:</strong> Run <code>./scripts/check_prerequisites.sh</code> to verify everything at once.
+  </div>
+  <aside class="notes">
+    Let's verify everyone has the tools installed before we start.
+  </aside>
+</section>
+
+<!-- ============================================================ -->
+<!-- PART 1: CONSOLE — SECTION DIVIDER -->
+<!-- ============================================================ -->
+<section class="section-slide" data-background-gradient="linear-gradient(135deg, #1e3a5f 0%, #232f3e 100%)">
+  <p class="part-label">Part 1</p>
+  <h2>Deploy via AWS Console</h2>
+  <p class="duration"><span class="badge badge-console">Console</span> &bull; 10 minutes</p>
+  <p style="font-size:0.7em; color:#aaa; margin-top:1em;">The visual way — great for learning &amp; debugging</p>
+</section>
+
+<!-- CONSOLE: CREATE -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Create Lambda Function</h2>
+  <h3>AWS Console &rarr; Lambda &rarr; Create function</h3>
+  <ol style="font-size:0.72em;">
+    <li class="fragment">Select <strong>Author from scratch</strong></li>
+    <li class="fragment">Function name: <code>workshop-console-demo</code></li>
+    <li class="fragment">Runtime: <code>Python 3.12</code></li>
+    <li class="fragment">Architecture: <code>x86_64</code></li>
+    <li class="fragment">Click <strong>Create function</strong></li>
+  </ol>
+  <div class="tip fragment">
+    <strong>What happens:</strong> AWS automatically creates an IAM execution role that gives Lambda permission to write logs to CloudWatch.
+  </div>
+</section>
+
+<!-- CONSOLE: CODE -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Add Code &amp; Deploy</h2>
+  <p style="font-size:0.7em;">Paste into the Lambda code editor, then click <strong>Deploy</strong>:</p>
+  <pre><code class="language-python" data-trim>
+import json
+
+def lambda_handler(event, context):
+    """
+    event  = input data (from API Gateway, S3, SQS, etc.)
+    context = runtime info (function name, memory, time remaining)
+    """
+    print(f"Event: {json.dumps(event)}")
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps({
+            'message': 'Hello from Console Lambda!',
+            'input': event
+        })
+    }
+  </code></pre>
+</section>
+
+<!-- CONSOLE: TEST & LOGS -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Test &amp; View Logs</h2>
+  <div class="columns">
+    <div>
+      <h3>Test the Function</h3>
+      <ol style="font-size:0.68em;">
+        <li>Click <strong>Test</strong> &rarr; Create test event</li>
+        <li>Event name: <code>test1</code></li>
+        <li>Body: <code>{"name": "Workshop"}</code></li>
+        <li>Click <strong>Test</strong></li>
+      </ol>
+      <p style="font-size:0.65em; margin-top:0.5em;">You'll see: status, response body, duration, billed duration, memory used.</p>
+    </div>
+    <div>
+      <h3>View CloudWatch Logs</h3>
+      <ul style="font-size:0.68em;">
+        <li><strong>Monitor</strong> tab &rarr; <strong>View CloudWatch logs</strong></li>
+        <li>Each invocation logs:</li>
+        <ul>
+          <li><code>START</code> — request ID</li>
+          <li>Your <code>print()</code> statements</li>
+          <li><code>END</code> — request ID</li>
+          <li><code>REPORT</code> — billing info</li>
+        </ul>
+      </ul>
+    </div>
+  </div>
+  <div class="takeaway fragment">
+    <strong>Key Takeaway:</strong> Console is great for learning &amp; debugging, but NOT for production — no version control, no repeatable deployments, no team collaboration.
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PART 2: CLI — SECTION DIVIDER -->
+<!-- ============================================================ -->
+<section class="section-slide" data-background-gradient="linear-gradient(135deg, #1e3a5f 0%, #232f3e 100%)">
+  <p class="part-label">Part 2</p>
+  <h2>Deploy via AWS CLI</h2>
+  <p class="duration"><span class="badge badge-cli">CLI</span> &bull; 15 minutes</p>
+  <p style="font-size:0.7em; color:#aaa; margin-top:1em;">Scriptable, automatable, CI/CD-ready</p>
+</section>
+
+<!-- CLI: IAM ROLE -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Step 1: Create IAM Role</h2>
+  <p style="font-size:0.68em;">Lambda needs an execution role. The trust policy allows Lambda to assume it.</p>
+  <pre><code class="language-bash" data-trim>
+# Create trust policy
+cat > trust-policy.json << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": {"Service": "lambda.amazonaws.com"},
+    "Action": "sts:AssumeRole"
+  }]
+}
+EOF
+
+# Create role + attach CloudWatch Logs permissions
+aws iam create-role \
+  --role-name workshop-lambda-role \
+  --assume-role-policy-document file://trust-policy.json
+
+aws iam attach-role-policy \
+  --role-name workshop-lambda-role \
+  --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+sleep 10  # Wait for IAM propagation
+  </code></pre>
+</section>
+
+<!-- CLI: CREATE & DEPLOY -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Step 2: Package &amp; Deploy</h2>
+  <pre><code class="language-python" data-trim>
+# lambda_function.py
+import json
+from datetime import datetime, timezone
+
+def lambda_handler(event, context):
+    return {
+        'statusCode': 200,
+        'body': json.dumps({
+            'message': 'Hello from CLI Lambda!',
+            'timestamp': datetime.now(timezone.utc).isoformat()
+        })
+    }
+  </code></pre>
+  <pre><code class="language-bash" data-trim>
+# Package & deploy
+zip function.zip lambda_function.py
+
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+
+aws lambda create-function \
+  --function-name workshop-cli-demo \
+  --runtime python3.12 \
+  --handler lambda_function.lambda_handler \
+  --zip-file fileb://function.zip \
+  --role arn:aws:iam::${ACCOUNT_ID}:role/workshop-lambda-role
+  </code></pre>
+</section>
+
+<!-- CLI: INVOKE & UPDATE -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Step 3: Invoke &amp; Update</h2>
+  <pre><code class="language-bash" data-trim>
+# Invoke
+aws lambda invoke \
+  --function-name workshop-cli-demo \
+  --payload '{"name": "CLI Workshop"}' \
+  --cli-binary-format raw-in-base64-out \
+  response.json && cat response.json
+
+# Update code
+zip function.zip lambda_function.py
+aws lambda update-function-code \
+  --function-name workshop-cli-demo \
+  --zip-file fileb://function.zip
+
+# Update configuration
+aws lambda update-function-configuration \
+  --function-name workshop-cli-demo \
+  --memory-size 256 \
+  --timeout 10
+  </code></pre>
+  <div class="takeaway fragment">
+    <strong>Key Takeaway:</strong> CLI is great for scripting, CI/CD pipelines, and quick operations. For complex multi-resource infrastructure, use Infrastructure as Code.
+  </div>
+</section>
+
+<!-- CLI: DEPENDENCIES BONUS -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Bonus: Deploy with Dependencies</h2>
+  <pre><code class="language-bash" data-trim>
+# Install dependencies into a package directory
+echo "requests==2.31.0" > requirements.txt
+pip install -r requirements.txt -t package/
+
+# Bundle everything together
+cp lambda_function.py package/
+cd package && zip -r ../function.zip . && cd ..
+
+# Update the function
+aws lambda update-function-code \
+  --function-name workshop-cli-demo \
+  --zip-file fileb://function.zip
+  </code></pre>
+  <div class="tip">
+    <strong>Tip:</strong> For larger dependencies, use <strong>Lambda Layers</strong> instead of bundling everything in the zip.
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PART 3: CDK — SECTION DIVIDER -->
+<!-- ============================================================ -->
+<section class="section-slide" data-background-gradient="linear-gradient(135deg, #1e3a5f 0%, #232f3e 100%)">
+  <p class="part-label">Part 3</p>
+  <h2>Deploy via AWS CDK</h2>
+  <p class="duration"><span class="badge badge-cdk">CDK</span> &bull; 15 minutes</p>
+  <p style="font-size:0.7em; color:#aaa; margin-top:1em;">Infrastructure as Code — in Python!</p>
+</section>
+
+<!-- CDK: WHAT IS CDK -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Why CDK?</h2>
+  <div class="columns">
+    <div>
+      <ul>
+        <li class="fragment"><strong>Real programming languages</strong> — no YAML/JSON templates</li>
+        <li class="fragment"><strong>Type checking</strong> &amp; IDE autocomplete</li>
+        <li class="fragment"><strong>Reusable constructs</strong> — share infrastructure patterns</li>
+        <li class="fragment"><strong>Version controlled</strong> — git, code reviews, collaboration</li>
+        <li class="fragment"><strong>Generates CloudFormation</strong> — proven deployment engine</li>
+      </ul>
+    </div>
+    <div>
+      <div class="arch-flow" style="flex-direction:column;">
+        <div class="arch-box highlight" style="font-size:0.9em;">Python CDK Code</div>
+        <div class="arch-arrow">&#8595;</div>
+        <div class="arch-box" style="font-size:0.9em;">CloudFormation Template</div>
+        <div class="arch-arrow">&#8595;</div>
+        <div class="arch-box" style="font-size:0.9em;">AWS Resources<br><small>Lambda + API GW + IAM</small></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CDK: INIT -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Initialize CDK Project</h2>
+  <pre><code class="language-bash" data-trim>
+# Bootstrap CDK (first time only per account/region)
+cdk bootstrap
+
+# Create project
+mkdir workshop-cdk && cd workshop-cdk
+cdk init app --language python
+
+# Activate virtual environment & install deps
+source .venv/bin/activate
+pip install -r requirements.txt
+pip install aws-cdk-lib constructs
+  </code></pre>
+  <pre><code class="language-python" data-trim>
+# lambda/handler.py
+import json
+from datetime import datetime, timezone
+
+def handler(event, context):
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json'},
+        'body': json.dumps({
+            'message': 'Hello from CDK Lambda!',
+            'path': event.get('path', '/'),
+            'timestamp': datetime.now(timezone.utc).isoformat()
+        })
+    }
+  </code></pre>
+</section>
+
+<!-- CDK: STACK -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>The CDK Stack — ~20 Lines of Python</h2>
+  <pre><code class="language-python" data-trim data-line-numbers="1-7|9-21|23-28|30-35">
+from aws_cdk import (
+    Stack, Duration, CfnOutput,
+    aws_lambda as _lambda,
+    aws_apigateway as apigw,
+)
+from constructs import Construct
+
+class WorkshopCdkStack(Stack):
+    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+        super().__init__(scope, construct_id, **kwargs)
+
+        # Lambda Function
+        fn = _lambda.Function(
+            self, 'WorkshopFunction',
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            handler='handler.handler',
+            code=_lambda.Code.from_asset('lambda'),
+            memory_size=256,
+            timeout=Duration.seconds(10),
+            environment={'ENVIRONMENT': 'workshop'}
+        )
+
+        # API Gateway — routes HTTP requests to Lambda
+        api = apigw.LambdaRestApi(
+            self, 'WorkshopApi',
+            handler=fn,
+            proxy=True,
+        )
+
+        # Output the API URL
+        CfnOutput(
+            self, 'ApiUrl',
+            value=api.url,
+            description='API Gateway URL',
+        )
+  </code></pre>
+  <p class="fragment" style="font-size:0.68em; color:var(--aws-teal);">Lambda + API Gateway + IAM roles — all from ~20 lines of Python!</p>
+</section>
+
+<!-- CDK: DEPLOY -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Deploy &amp; Test</h2>
+  <pre><code class="language-bash" data-trim>
+# Preview the CloudFormation template
+cdk synth
+
+# Check what will be created/changed
+cdk diff
+
+# Deploy! (type 'y' when prompted)
+cdk deploy
+
+# Test the API (URL from deploy output)
+curl https://xxxxx.execute-api.us-east-1.amazonaws.com/prod/
+
+# Cleanup — removes ALL resources
+cdk destroy
+  </code></pre>
+  <div class="takeaway fragment">
+    <strong>Key Takeaway:</strong> CDK is best for complex infrastructure — reusable constructs, type safety, and managing multiple resources as code.
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PART 4: SAM — SECTION DIVIDER -->
+<!-- ============================================================ -->
+<section class="section-slide" data-background-gradient="linear-gradient(135deg, #1e3a5f 0%, #232f3e 100%)">
+  <p class="part-label">Part 4</p>
+  <h2>Local Testing with SAM</h2>
+  <p class="duration"><span class="badge badge-sam">SAM</span> &bull; 10 minutes</p>
+  <p style="font-size:0.7em; color:#aaa; margin-top:1em;">Test locally before you deploy — save time &amp; money</p>
+</section>
+
+<!-- SAM: WHY -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Why Test Locally?</h2>
+  <div class="columns">
+    <div>
+      <ul>
+        <li class="fragment"><strong>Save time</strong> — no waiting for deployments</li>
+        <li class="fragment"><strong>Save money</strong> — no AWS charges during development</li>
+        <li class="fragment"><strong>Catch bugs early</strong> — fast feedback loop</li>
+        <li class="fragment"><strong>Realistic environment</strong> — Docker simulates Lambda runtime</li>
+      </ul>
+      <div class="tip fragment" style="margin-top:1em;">
+        <strong>Prerequisite:</strong> Docker Desktop must be running. SAM uses Docker to simulate the Lambda runtime.
+      </div>
+    </div>
+    <div>
+      <div class="arch-flow" style="flex-direction:column;">
+        <div class="arch-box" style="font-size:0.9em;">Your Code</div>
+        <div class="arch-arrow">&#8595;</div>
+        <div class="arch-box highlight" style="font-size:0.9em;">SAM CLI<br><small>sam local invoke</small></div>
+        <div class="arch-arrow">&#8595;</div>
+        <div class="arch-box" style="font-size:0.9em;">Docker Container<br><small>Lambda Runtime</small></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SAM: INIT & BUILD -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Initialize &amp; Build</h2>
+  <pre><code class="language-bash" data-trim>
+# Create a SAM project
+sam init --runtime python3.12 --name workshop-sam \
+  --app-template hello-world
+cd workshop-sam
+
+# Build the application
+sam build
+  </code></pre>
+  <h3>Project Structure</h3>
+  <pre><code class="language-text" data-trim>
+workshop-sam/
+├── hello_world/
+│   ├── app.py              # Lambda handler
+│   └── requirements.txt    # Dependencies
+├── events/
+│   └── event.json          # Test events
+├── template.yaml           # SAM template (infra definition)
+└── tests/                  # Unit tests
+  </code></pre>
+</section>
+
+<!-- SAM: LOCAL TESTING -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Local Invoke &amp; Local API</h2>
+  <pre><code class="language-bash" data-trim>
+# Invoke locally (runs in Docker)
+sam local invoke HelloWorldFunction -e events/event.json
+
+# Pass custom event inline
+echo '{"name": "Local Test"}' | sam local invoke HelloWorldFunction --event -
+
+# Start a local API Gateway on localhost:3000
+sam local start-api
+
+# Test from another terminal
+curl http://localhost:3000/hello
+  </code></pre>
+  <div class="tip">
+    <strong>Note:</strong> First run is slow (Docker pulls the Lambda runtime image). Subsequent runs are much faster.
+  </div>
+</section>
+
+<!-- SAM: EVENTS & DEPLOY -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Generate Events &amp; Deploy</h2>
+  <pre><code class="language-bash" data-trim>
+# Generate realistic event payloads
+sam local generate-event apigateway aws-proxy > events/api.json
+sam local generate-event s3 put > events/s3.json
+sam local generate-event sqs receive-message > events/sqs.json
+  </code></pre>
+  <pre><code class="language-bash" data-trim>
+# Deploy to AWS (first time — interactive)
+sam deploy --guided
+
+# Subsequent deployments
+sam deploy
+
+# Cleanup
+sam delete
+  </code></pre>
+  <div class="takeaway fragment">
+    <strong>Key Takeaway:</strong> SAM CLI is essential for local development. Always test locally first, then deploy. Your AWS bill will thank you!
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- COMPARISON -->
+<!-- ============================================================ -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Method Comparison</h2>
+  <table>
+    <thead>
+      <tr><th>Method</th><th>Best For</th><th>IaC</th><th>Local Testing</th><th>Deployment</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="badge badge-console">Console</span></td>
+        <td>Learning, debugging</td>
+        <td>No</td>
+        <td>No</td>
+        <td>Manual (click)</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-cli">CLI</span></td>
+        <td>Scripts, CI/CD, quick ops</td>
+        <td>No</td>
+        <td>No</td>
+        <td>Fast (commands)</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-cdk">CDK</span></td>
+        <td>Complex infra, reusability</td>
+        <td>Yes</td>
+        <td>No</td>
+        <td>Medium (synth + deploy)</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-sam">SAM</span></td>
+        <td>Serverless apps, local dev</td>
+        <td>Yes</td>
+        <td>Yes</td>
+        <td>Medium (build + deploy)</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="fragment" style="font-size:0.72em; margin-top:0.5em; color:var(--aws-teal);"><strong>In real projects, combine them:</strong> CDK for infrastructure, SAM for local testing, CLI for quick operations.</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- LAMBDA HANDLER ANATOMY -->
+<!-- ============================================================ -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Python Lambda — Anatomy</h2>
+  <div class="columns">
+    <div>
+      <pre><code class="language-python" data-trim>
+def lambda_handler(event, context):
+    # event = input data (dict)
+    # context = runtime info
+
+    # Context attributes:
+    context.function_name
+    context.memory_limit_in_mb
+    context.aws_request_id
+    context.get_remaining_time_in_millis()
+
+    return {
+        'statusCode': 200,
+        'headers': {
+            'Content-Type': 'application/json'
+        },
+        'body': json.dumps({
+            'message': 'Hello!'
+        })
+    }
+      </code></pre>
+    </div>
+    <div>
+      <h3>Lambda Limits</h3>
+      <div class="limits-grid">
+        <div class="limit-item"><strong>Memory:</strong> 128 MB – 10 GB</div>
+        <div class="limit-item"><strong>Timeout:</strong> 1s – 15 min</div>
+        <div class="limit-item"><strong>Package:</strong> 50 MB (zip)</div>
+        <div class="limit-item"><strong>Unzipped:</strong> 250 MB</div>
+        <div class="limit-item"><strong>Container:</strong> 10 GB</div>
+        <div class="limit-item"><strong>/tmp:</strong> 512 MB – 10 GB</div>
+        <div class="limit-item"><strong>Layers:</strong> 5 per function</div>
+        <div class="limit-item"><strong>Concurrency:</strong> 1,000 default</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CLEANUP -->
+<!-- ============================================================ -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Cleanup — Don't Forget!</h2>
+  <pre><code class="language-bash" data-trim>
+# Option 1: Run the automated cleanup script
+./scripts/cleanup_all.sh
+
+# Option 2: Manual cleanup
+aws lambda delete-function --function-name workshop-console-demo
+aws lambda delete-function --function-name workshop-cli-demo
+
+aws iam detach-role-policy --role-name workshop-lambda-role \
+  --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+aws iam delete-role --role-name workshop-lambda-role
+
+cd workshop-cdk && cdk destroy
+cd workshop-sam && sam delete
+  </code></pre>
+  <div class="takeaway">
+    <strong>Important:</strong> Lambda, API Gateway, and CloudWatch Logs have generous free tiers (1M requests/month). But always clean up after workshops to avoid unexpected charges.
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- TROUBLESHOOTING -->
+<!-- ============================================================ -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Troubleshooting</h2>
+  <table>
+    <thead>
+      <tr><th>Error</th><th>Cause</th><th>Solution</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>Unable to locate credentials</code></td><td>AWS CLI not configured</td><td>Run <code>aws configure</code></td></tr>
+      <tr><td><code>Access Denied</code></td><td>Wrong/expired credentials</td><td>Check <code>aws sts get-caller-identity</code></td></tr>
+      <tr><td><code>Role cannot be assumed</code></td><td>IAM propagation delay</td><td>Wait 10 seconds after role creation</td></tr>
+      <tr><td><code>Need to bootstrap</code></td><td>CDK not initialized</td><td>Run <code>cdk bootstrap</code></td></tr>
+      <tr><td><code>Docker not running</code></td><td>Docker Desktop not started</td><td>Start Docker Desktop</td></tr>
+      <tr><td><code>sam local</code> hangs</td><td>Docker issue</td><td>Restart Docker Desktop</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================================================ -->
+<!-- RESOURCES -->
+<!-- ============================================================ -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Next Steps &amp; Resources</h2>
+  <div class="columns">
+    <div>
+      <h3>Documentation</h3>
+      <ul style="font-size:0.65em;">
+        <li><a href="https://docs.aws.amazon.com/lambda/latest/dg/lambda-python.html" style="color:var(--aws-teal);">Lambda Python Docs</a></li>
+        <li><a href="https://docs.aws.amazon.com/serverless-application-model/" style="color:var(--aws-teal);">SAM Documentation</a></li>
+        <li><a href="https://docs.aws.amazon.com/cdk/api/v2/python/" style="color:var(--aws-teal);">CDK Python Reference</a></li>
+        <li><a href="https://docs.powertools.aws.dev/lambda/python/" style="color:var(--aws-teal);">Lambda Powertools for Python</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3>Learn More</h3>
+      <ul style="font-size:0.65em;">
+        <li><a href="https://serverlessland.com/patterns" style="color:var(--aws-teal);">Serverless Patterns Collection</a></li>
+        <li><a href="https://cdkworkshop.com" style="color:var(--aws-teal);">CDK Extended Workshop</a></li>
+        <li>Workshop Cheat Sheet: <code>AWS_Lambda_Cheat_Sheet.txt</code></li>
+        <li>All demo code: <code>demo-code/</code> folder</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- RECAP / CLOSING -->
+<!-- ============================================================ -->
+<section class="title-slide" data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2 style="font-size:1.8em;">Quick Recap</h2>
+  <div style="display:flex; justify-content:center; gap:20px; margin:1em 0; flex-wrap:wrap;">
+    <div style="text-align:center;">
+      <span class="badge badge-console" style="font-size:0.8em; padding:6px 16px;">Console</span>
+      <p style="font-size:0.6em; color:#aaa; margin-top:4px;">Learning &amp;<br>Debugging</p>
+    </div>
+    <div style="font-size:1.5em; color:#555; align-self:center;">&rarr;</div>
+    <div style="text-align:center;">
+      <span class="badge badge-cli" style="font-size:0.8em; padding:6px 16px;">CLI</span>
+      <p style="font-size:0.6em; color:#aaa; margin-top:4px;">Scripts &amp;<br>Automation</p>
+    </div>
+    <div style="font-size:1.5em; color:#555; align-self:center;">&rarr;</div>
+    <div style="text-align:center;">
+      <span class="badge badge-cdk" style="font-size:0.8em; padding:6px 16px;">CDK</span>
+      <p style="font-size:0.6em; color:#aaa; margin-top:4px;">Infrastructure<br>as Code</p>
+    </div>
+    <div style="font-size:1.5em; color:#555; align-self:center;">&rarr;</div>
+    <div style="text-align:center;">
+      <span class="badge badge-sam" style="font-size:0.8em; padding:6px 16px;">SAM</span>
+      <p style="font-size:0.6em; color:#aaa; margin-top:4px;">Local Testing &amp;<br>Development</p>
+    </div>
+  </div>
+  <p style="font-size:0.75em; color:var(--aws-teal); margin-top:1em;">Combine them: CDK for infra + SAM for local testing + CLI for quick ops</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- THANK YOU -->
+<!-- ============================================================ -->
+<section class="title-slide" data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #232f3e 50%, #1b2a4a 100%)">
+  <div style="margin-bottom: 0.3em;">
+    <span style="font-size:3em;">&#955;</span>
+  </div>
+  <h1 style="font-size:2.2em;">Thank You!</h1>
+  <p class="subtitle" style="font-size:0.9em;">You now know 4 ways to deploy AWS Lambda functions</p>
+  <p style="font-size:0.8em; margin-top:1.5em; color:var(--aws-teal);">Questions?</p>
+  <p style="font-size:0.6em; color:#666; margin-top:2em;">Don't forget to run <code>./scripts/cleanup_all.sh</code></p>
+</section>
+
+</div><!-- /.slides -->
+</div><!-- /.reveal -->
+
+<div class="footer-bar"></div>
+
+<!-- Reveal.js + plugins from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/markdown/markdown.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    showSlideNumber: 'all',
+    transition: 'slide',
+    transitionSpeed: 'default',
+    backgroundTransition: 'fade',
+    center: false,
+    width: 1280,
+    height: 720,
+    margin: 0.04,
+    plugins: [
+      RevealHighlight,
+      RevealNotes,
+      RevealMarkdown,
+    ]
+  });
+</script>
+
+</body>
+</html>

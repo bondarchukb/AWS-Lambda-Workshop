@@ -1,0 +1,4 @@
+# No external dependencies needed for this demo
+# Add packages here if needed, e.g.:
+# requests==2.31.0
+# boto3==1.34.0
