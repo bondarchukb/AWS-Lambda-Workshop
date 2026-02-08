@@ -327,7 +327,7 @@
 <!-- WHAT IS LAMBDA? -->
 <!-- ============================================================ -->
 <section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
-  <h2>What is AWS Lambda?</h2>
+  <h2>What is AWS Lambda?</h2> 
   <div class="columns">
     <div>
       <ul>
@@ -350,6 +350,47 @@
   </div>
   <aside class="notes">
     Quick refresher — Lambda is serverless. You upload code, AWS handles everything else.
+  </aside>
+</section>
+
+<!-- ============================================================ -->
+<!-- LAMBDA EVENT SOURCES / TRIGGERS -->
+<!-- ============================================================ -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Lambda Event Sources</h2>
+  <p style="font-size:0.75em; color:var(--aws-light); margin-bottom:0.6em;">Lambda is <strong style="color:var(--aws-orange);">event-driven</strong> — your code runs in response to triggers</p>
+  <div class="columns">
+    <div>
+      <h3 style="font-size:0.85em;">Synchronous (Request/Response)</h3>
+      <ul style="font-size:0.65em;">
+        <li class="fragment"><strong>API Gateway</strong> — HTTP requests from users</li>
+        <li class="fragment"><strong>ALB</strong> — Application Load Balancer routes</li>
+        <li class="fragment"><strong>CloudFront</strong> — Lambda@Edge for CDN logic</li>
+        <li class="fragment"><strong>Cognito</strong> — Auth triggers (sign-up, login)</li>
+      </ul>
+      <h3 style="font-size:0.85em; margin-top:0.6em;">Asynchronous (Fire &amp; Forget)</h3>
+      <ul style="font-size:0.65em;">
+        <li class="fragment"><strong>S3</strong> — file uploaded, deleted, or modified</li>
+        <li class="fragment"><strong>SNS</strong> — pub/sub notifications</li>
+        <li class="fragment"><strong>EventBridge</strong> — scheduled rules &amp; event bus</li>
+        <li class="fragment"><strong>SES</strong> — incoming email processing</li>
+      </ul>
+    </div>
+    <div>
+      <h3 style="font-size:0.85em;">Stream / Queue (Polling)</h3>
+      <ul style="font-size:0.65em;">
+        <li class="fragment"><strong>SQS</strong> — message queue processing</li>
+        <li class="fragment"><strong>DynamoDB Streams</strong> — react to DB changes</li>
+        <li class="fragment"><strong>Kinesis</strong> — real-time data streams</li>
+        <li class="fragment"><strong>Kafka (MSK)</strong> — managed Kafka topics</li>
+      </ul>
+      <div class="takeaway fragment" style="margin-top:1em;">
+        <strong>Key Insight:</strong> You don't call Lambda directly — <em>events</em> trigger it. This is the core of serverless architecture: write small, focused functions that respond to things happening in your cloud.
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    This slide explains the event-driven model. Lambda doesn't run constantly — it wakes up when something happens. Three invocation patterns: synchronous (caller waits), asynchronous (fire and forget), and polling (Lambda pulls from streams/queues). In this workshop we'll use API Gateway (synchronous) as our trigger.
   </aside>
 </section>
 
