@@ -374,6 +374,7 @@
         <li class="fragment"><strong>SNS</strong> — pub/sub notifications</li>
         <li class="fragment"><strong>EventBridge</strong> — scheduled rules &amp; event bus</li>
         <li class="fragment"><strong>SES</strong> — incoming email processing</li>
+        <li class="fragment"><strong>CloudWatch Logs</strong> — log subscription filters</li>
       </ul>
     </div>
     <div>
@@ -391,6 +392,136 @@
   </div>
   <aside class="notes">
     This slide explains the event-driven model. Lambda doesn't run constantly — it wakes up when something happens. Three invocation patterns: synchronous (caller waits), asynchronous (fire and forget), and polling (Lambda pulls from streams/queues). In this workshop we'll use API Gateway (synchronous) as our trigger.
+  </aside>
+</section>
+
+<!-- ============================================================ -->
+<!-- POLL-BASED vs PUSH-BASED -->
+<!-- ============================================================ -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Poll-Based vs Push-Based</h2>
+  <p style="font-size:0.72em; color:var(--aws-light); margin-bottom:0.8em;">Two fundamentally different ways Lambda receives events</p>
+  <div class="columns">
+    <div>
+      <div style="background:rgba(29,199,234,0.08); border:2px solid var(--aws-teal); border-radius:10px; padding:18px 22px;">
+        <h3 style="font-size:0.9em; margin-bottom:0.3em;">Poll-Based</h3>
+        <p style="font-size:0.62em; color:#aaa; margin-bottom:0.6em;">Lambda polls the source for new records in batches</p>
+        <ul style="font-size:0.62em;">
+          <li class="fragment"><strong>SQS</strong> — queues</li>
+          <li class="fragment"><strong>Kinesis</strong> — data streams</li>
+          <li class="fragment"><strong>DynamoDB Streams</strong> — change data capture</li>
+          <li class="fragment"><strong>Kafka / MSK</strong> — topic partitions</li>
+        </ul>
+        <div class="fragment" style="margin-top:0.6em; font-size:0.58em; color:var(--aws-teal);">Lambda manages the poller — you configure batch size, window, and concurrency</div>
+      </div>
+    </div>
+    <div>
+      <div style="background:rgba(255,153,0,0.08); border:2px solid var(--aws-orange); border-radius:10px; padding:18px 22px;">
+        <h3 style="font-size:0.9em; margin-bottom:0.3em;">Push-Based</h3>
+        <p style="font-size:0.62em; color:#aaa; margin-bottom:0.6em;">The source service invokes Lambda directly</p>
+        <ul style="font-size:0.62em;">
+          <li class="fragment"><strong>API Gateway</strong> — HTTP requests</li>
+          <li class="fragment"><strong>S3</strong> — object events</li>
+          <li class="fragment"><strong>SNS</strong> — notifications</li>
+          <li class="fragment"><strong>EventBridge</strong> — rules &amp; schedules</li>
+          <li class="fragment"><strong>CloudWatch Logs</strong> — subscription filters</li>
+        </ul>
+        <div class="fragment" style="margin-top:0.6em; font-size:0.58em; color:var(--aws-orange);">The source needs permission to invoke your function (resource-based policy)</div>
+      </div>
+    </div>
+  </div>
+  <div class="takeaway fragment" style="margin-top:0.8em;">
+    <strong>Why this matters:</strong> Poll-based = you control the throughput. Push-based = the source controls it. Plan accordingly.
+  </div>
+  <aside class="notes">
+    This is a detail most tutorials skip, but it matters in production. With poll-based, Lambda runs the poller internally and you control throughput via batch size and concurrency. With push-based, the calling service just fires — if S3 gets 10k uploads, you get 10k invocations unless you set reserved concurrency. The resource-based policy point is also worth mentioning since it's a common IAM gotcha.
+  </aside>
+</section>
+
+<!-- ============================================================ -->
+<!-- LAMBDA LAYERS & PACKAGING -->
+<!-- ============================================================ -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Lambda Layers &amp; Packaging</h2>
+  <div class="columns">
+    <div>
+      <h3 style="font-size:0.8em;">Three Ways to Package Dependencies</h3>
+      <ul style="font-size:0.62em;">
+        <li class="fragment"><strong>Zip bundle</strong> — pip install into a folder, zip with your code</li>
+        <li class="fragment"><strong>Lambda Layer</strong> — reusable dependency package</li>
+        <li class="fragment"><strong>Container image</strong> — full Docker image, up to 10 GB</li>
+      </ul>
+      <div class="tip fragment" style="margin-top:0.5em;">
+        <strong>Rule of thumb:</strong> Zip for small projects. Layers for shared deps. Containers when you hit the 250 MB wall.
+      </div>
+    </div>
+    <div>
+      <pre><code class="language-bash" data-trim>
+# Build a layer
+mkdir -p layer/python
+pip install requests -t layer/python/
+cd layer && zip -r ../my-layer.zip .
+
+# Publish it
+aws lambda publish-layer-version \
+  --layer-name my-deps \
+  --zip-file fileb://my-layer.zip \
+  --compatible-runtimes python3.12
+
+# Attach to any function
+aws lambda update-function-configuration \
+  --function-name my-func \
+  --layers arn:aws:lambda:...:my-deps:1
+      </code></pre>
+    </div>
+  </div>
+  <aside class="notes">
+    The 250 MB unzipped limit catches people off guard — that includes your code plus all dependencies. Layers let you share up to 5 layers per function. The key gotcha: layers must use the python/ directory structure.
+  </aside>
+</section>
+
+<!-- ============================================================ -->
+<!-- LAMBDA CONTAINER IMAGES -->
+<!-- ============================================================ -->
+<section data-background-gradient="linear-gradient(135deg, #0d1b2a 0%, #1b2a4a 50%, #232f3e 100%)">
+  <h2>Lambda from a Dockerfile</h2>
+  <div class="columns">
+    <div>
+      <h3 style="font-size:0.8em;">When to Use This</h3>
+      <ul style="font-size:0.62em;">
+        <li class="fragment">Dependencies exceed 250 MB</li>
+        <li class="fragment">Need system packages (<code>ffmpeg</code>, etc.)</li>
+        <li class="fragment">Team already uses Docker workflows</li>
+      </ul>
+      <h3 style="font-size:0.8em; margin-top:0.5em;">Good to Know</h3>
+      <ul style="font-size:0.62em;">
+        <li class="fragment">Max image size: <strong>10 GB</strong></li>
+        <li class="fragment">Must be stored in <strong>ECR</strong></li>
+        <li class="fragment">Cold starts are slower than zip deploys</li>
+      </ul>
+    </div>
+    <div>
+      <pre><code class="language-docker" data-trim>
+FROM public.ecr.aws/lambda/python:3.12
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY app.py ${LAMBDA_TASK_ROOT}
+CMD ["app.lambda_handler"]
+      </code></pre>
+      <pre><code class="language-bash" data-trim>
+docker build -t my-lambda .
+docker tag my-lambda:latest 123456.dkr.ecr...
+docker push 123456.dkr.ecr...
+
+aws lambda create-function \
+  --function-name my-func \
+  --package-type Image \
+  --code ImageUri=123456.dkr.ecr...
+      </code></pre>
+    </div>
+  </div>
+  <aside class="notes">
+    Container image support was a game changer for ML and data teams. AWS base images include the runtime interface client. ECR is the only supported registry — no Docker Hub.
   </aside>
 </section>
 
@@ -424,10 +555,9 @@ aws configure get region
 <!-- PART 1: CONSOLE — SECTION DIVIDER -->
 <!-- ============================================================ -->
 <section class="section-slide" data-background-gradient="linear-gradient(135deg, #1e3a5f 0%, #232f3e 100%)">
-  <p class="part-label">Part 1</p>
   <h2>Deploy via AWS Console</h2>
-  <p class="duration"><span class="badge badge-console">Console</span> &bull; 10 minutes</p>
-  <p style="font-size:0.7em; color:#aaa; margin-top:1em;">The visual way — great for learning &amp; debugging</p>
+  <p class="duration"><span class="badge badge-console">Console</span></p>
+  <p style="font-size:0.7em; color:#aaa; margin-top:1em;">Click around, see what happens, break things safely</p>
 </section>
 
 <!-- CONSOLE: CREATE -->
@@ -507,10 +637,9 @@ def lambda_handler(event, context):
 <!-- PART 2: CLI — SECTION DIVIDER -->
 <!-- ============================================================ -->
 <section class="section-slide" data-background-gradient="linear-gradient(135deg, #1e3a5f 0%, #232f3e 100%)">
-  <p class="part-label">Part 2</p>
   <h2>Deploy via AWS CLI</h2>
-  <p class="duration"><span class="badge badge-cli">CLI</span> &bull; 15 minutes</p>
-  <p style="font-size:0.7em; color:#aaa; margin-top:1em;">Scriptable, automatable, CI/CD-ready</p>
+  <p class="duration"><span class="badge badge-cli">CLI</span></p>
+  <p style="font-size:0.7em; color:#aaa; margin-top:1em;">Same thing, but now you can put it in a bash script</p>
 </section>
 
 <!-- CLI: IAM ROLE -->
@@ -629,10 +758,9 @@ aws lambda update-function-code \
 <!-- PART 3: CDK — SECTION DIVIDER -->
 <!-- ============================================================ -->
 <section class="section-slide" data-background-gradient="linear-gradient(135deg, #1e3a5f 0%, #232f3e 100%)">
-  <p class="part-label">Part 3</p>
   <h2>Deploy via AWS CDK</h2>
-  <p class="duration"><span class="badge badge-cdk">CDK</span> &bull; 15 minutes</p>
-  <p style="font-size:0.7em; color:#aaa; margin-top:1em;">Infrastructure as Code — in Python!</p>
+  <p class="duration"><span class="badge badge-cdk">CDK</span></p>
+  <p style="font-size:0.7em; color:#aaa; margin-top:1em;">Define your infra in Python, let CloudFormation figure out the rest</p>
 </section>
 
 <!-- CDK: WHAT IS CDK -->
@@ -765,10 +893,9 @@ cdk destroy
 <!-- PART 4: SAM — SECTION DIVIDER -->
 <!-- ============================================================ -->
 <section class="section-slide" data-background-gradient="linear-gradient(135deg, #1e3a5f 0%, #232f3e 100%)">
-  <p class="part-label">Part 4</p>
   <h2>Local Testing with SAM</h2>
-  <p class="duration"><span class="badge badge-sam">SAM</span> &bull; 10 minutes</p>
-  <p style="font-size:0.7em; color:#aaa; margin-top:1em;">Test locally before you deploy — save time &amp; money</p>
+  <p class="duration"><span class="badge badge-sam">SAM</span></p>
+  <p style="font-size:0.7em; color:#aaa; margin-top:1em;">Run Lambda on your laptop with Docker — no deploy, no waiting, no bill</p>
 </section>
 
 <!-- SAM: WHY -->

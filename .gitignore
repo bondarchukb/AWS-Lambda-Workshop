@@ -10,6 +10,14 @@ creds.txt
 # IDE
 .claude/
 
+# Internal workshop notes - keep local only
+AWS_Lambda_Cheat_Sheet.txt
+AWS_Lambda_Workshop_1Hour.md
+CLAUDE.md
+NOTEBOOK_SETUP_PLAN.md
+WORKSHOP_IMPROVEMENTS.md
+Workshop_Presenter_Script.txt
+
 # Python
 __pycache__/
 *.pyc
